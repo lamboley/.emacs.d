@@ -1,6 +1,19 @@
 #+TITLE: Lucas Lamboley's Emacs configuration
 #+PROPERTY: header-args:emacs-lisp :tangle "~/.emacs.d/init.el"
 
+* About this file
+** What is this file
+
+This file is a org file used by =org-mode= from Emacs.
+
+** How to use this file for configure Emacs ?
+
+You have to create the configuration file using
+=M-x org-babel-tangle= (=C-c C-v t=). This will produce
+the =~/.emacs.d/init.el= used by Emacs. Using this method allow
+us to write a tidy configuration using =org-mode= without
+loading the entire org file.
+
 * Configuration
 ** Emacs's top header package
 
@@ -59,14 +72,12 @@ download a package if he is not present locally.
 *** Backup and save
 
 #+BEGIN_SRC emacs-lisp
-;;(setq backup-directory-alist '(("." . "~/.emacs.d/backup")))
 (setq backup-directory-alist 
   `(("." . ,(expand-file-name (concat user-emacs-directory "backup")))))
 
 (setq delete-old-versions -1)
 (setq version-control t)
 (setq vc-make-backup-files t)
-;;(setq auto-save-file-name-transforms '((".*" "~/.emacs.d/auto-save-list/" t)))
 (setq auto-save-file-name-transforms 
   `((".*" ,(expand-file-name (concat user-emacs-directory "auto-save-list")) t)))
 #+END_SRC
