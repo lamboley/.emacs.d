@@ -113,7 +113,6 @@ download a package if he is not present locally.
 
 *** History
 
-From http://www.wisdomandwonder.com/wp-content/uploads/2014/03/C3F.html:
 #+BEGIN_SRC emacs-lisp
 (setq savehist-file (expand-file-name (concat user-emacs-directory "savehist")))
 (savehist-mode 1)
