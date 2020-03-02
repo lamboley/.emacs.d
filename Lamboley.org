@@ -7,7 +7,7 @@
 This file is a org file used by =org-mode= from Emacs.
 
 ** How to use this file for configure Emacs ?
-
+   
 You have to create the configuration file using
 =M-x org-babel-tangle= (=C-c C-v t=). This will produce
 the =~/.emacs.d/init.el= used by Emacs. Using this method allow
@@ -69,7 +69,15 @@ download a package if he is not present locally.
 #+END_SRC
 
 ** Generic configuration
-*** Backup and save
+*** Hide GUI parts
+
+#+BEGIN_SRC emacs-lisp
+(if (fboundp 'menu-bar-mode) (menu-bar-mode -1))
+(if (fboundp 'tool-bar-mode) (tool-bar-mode -1))
+(if (fboundp 'scroll-bar-mode) (scroll-bar-mode -1))
+#+END_SRC
+
+*** Backup, save and history
 
 #+BEGIN_SRC emacs-lisp
 (setq backup-directory-alist 
@@ -82,7 +90,62 @@ download a package if he is not present locally.
   `((".*" ,(expand-file-name (concat user-emacs-directory "auto-save-list")) t)))
 #+END_SRC
 
+*** History
+
+From http://www.wisdomandwonder.com/wp-content/uploads/2014/03/C3F.html:
+#+BEGIN_SRC emacs-lisp
+(setq savehist-file (expand-file-name (concat user-emacs-directory "savehist")))
+(savehist-mode 1)
+(setq history-length t)
+(setq history-delete-duplicates t)
+(setq savehist-save-minibuffer-history 1)
+(setq savehist-additional-variables '(kill-ring search-ring regexp-search-ring))
+#+END_SRC
+
+*** Miscellaneous
+
+Remove useless =*scratch*= buffer.
+
+#+BEGIN_SRC emacs-lisp
+(if (get-buffer "*scratch*") (kill-buffer "*scratch*"))
+#+END_SRC
+
+Always the use y-or-n over yes-or-no because I am lazy.
+
+#+BEGIN_SRC emacs-lisp
+(defalias 'yes-or-no-p 'y-or-n-p)
+#+END_SRC
+
+Show date and time in the =mode-line=.
+
+#+BEGIN_SRC emacs-lisp
+(setq display-time-day-and-date t
+      display-time-24hr-format t)
+(display-time)
+#+END_SRC
+
+Show matching pairs of parantheses and other characters.
+
+#+BEGIN_SRC emacs-lisp
+(show-paren-mode 1)
+#+END_SRC
+
+Show line numbers.
+
+#+BEGIN_SRC emacs-lisp
+(when (version<= "26.0.50" emacs-version )
+  (global-display-line-numbers-mode))
+#+END_SRC
+
+Show column number in =mode-line=.
+
+#+BEGIN_SRC emacs-lisp
+(column-number-mode 1)
+#+END_SRC
+
 ** Emacs's bottom header package
+
+Also necessary for flycheck.
 
 #+BEGIN_SRC emacs-lisp
 ;;; init.el ends here
