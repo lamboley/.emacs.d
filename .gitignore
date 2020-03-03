@@ -1,5 +1,6 @@
 /auto-save-list/
 /backup/
+/transient/
 /.emacs.desktop
 /.org-id-locations
 /ido.last
@@ -7,3 +8,4 @@
 /init.el
 /private.el
 /savehist
+/recentf
