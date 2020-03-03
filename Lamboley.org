@@ -94,7 +94,7 @@ Keep sensitive information in a separate file.
   :init
   (progn
     (setq ido-enable-flex-matching t
-          ido-everywhere t)
+	  ido-everywhere t)
     (ido-mode 1)))
 #+END_SRC
 
@@ -106,6 +106,16 @@ Keep sensitive information in a separate file.
   :init
   (add-hook 'after-init-hook 'global-company-mode)
   (setq-default company-tooltip-align-annotations t))
+#+END_SRC
+
+*** Trailing whitespace
+
+#+BEGIN_SRC emacs-lisp
+(use-package whitespace-cleanup-mode
+  :diminish whitespace-cleanup-mode
+  :init
+  (setq-default show-trailing-whitespace t)
+  (add-hook 'after-init-hook 'global-whitespace-cleanup-mode))
 #+END_SRC
 
 ** UI
@@ -136,6 +146,15 @@ Keep sensitive information in a separate file.
 #+END_SRC
 
 ** Generic configuration
+*** Save desktop
+
+#+BEGIN_SRC emacs-lisp
+(setq desktop-path (list user-emacs-directory)
+      desktop-auto-save-timeout 600
+      desktop-restore-frames t)
+(desktop-save-mode 1)
+#+END_SRC
+
 *** Backup, save and lock files
 
 #+BEGIN_SRC emacs-lisp
