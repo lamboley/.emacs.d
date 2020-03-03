@@ -1,5 +1,6 @@
 /auto-save-list/
 /backup/
+/.emacs.desktop
 /.org-id-locations
 /ido.last
 /custom.el
