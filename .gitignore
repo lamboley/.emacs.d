@@ -1,5 +1,7 @@
 /auto-save-list/
 /backup/
+/.org-id-locations
+/ido.last
 /custom.el
 /init.el
 /private.el
