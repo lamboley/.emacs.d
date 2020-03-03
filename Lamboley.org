@@ -7,7 +7,7 @@
 This file is a org file used by =org-mode= from Emacs.
 
 ** How to use this file for configure Emacs ?
-   
+
 You have to create the configuration file using
 =M-x org-babel-tangle= (=C-c C-v t=). This will produce
 the =~/.emacs.d/init.el= used by Emacs. Using this method allow
@@ -17,7 +17,7 @@ loading the entire org file.
 * Configuration
 ** Emacs's top header package
 
-This is necessary for flycheck, he will throw an error if it is 
+This is necessary for flycheck, he will throw an error if it is
 not there.
 
 #+BEGIN_SRC emacs-lisp
@@ -32,7 +32,7 @@ not there.
 We use =use-package= to isolate package configuration
 for better performance at startup time. =use-package= can also
 download a package if he is not present locally.
- 
+
 #+BEGIN_SRC emacs-lisp
 (package-initialize)
 (add-to-list 'package-archives '("melpa-stable" . "https://stable.melpa.org/packages/") t)
@@ -43,27 +43,31 @@ download a package if he is not present locally.
   (package-refresh-contents)
   (package-install 'use-package))
 
-(eval-when-compile
-  (require 'use-package))
-
 (setq use-package-verbose t)
 (setq use-package-always-ensure t)
+
+(eval-when-compile
+  (require 'use-package))
 #+END_SRC
 
-*** Benchmark 
+*** Benchmark
 
 #+BEGIN_SRC emacs-lisp
 (defun my/show-startup-time ()
   "Show Emacs's startup time in the minibuffer"
   (message "Startup time: %s seconds."
     (emacs-uptime "%s")))
+
 (add-hook 'emacs-startup-hook 'my/show-startup-time 'append)
 #+END_SRC
 
-*** Libraries
+*** Private
+
+Keep sensitive information in a separate file.
 
 #+BEGIN_SRC emacs-lisp
-(use-package diminish)
+(defvar my-private-file (expand-file-name "private.el" user-emacs-directory))
+(load my-private-file 'noerror)
 #+END_SRC
 
 *** Custom file
@@ -72,6 +76,13 @@ download a package if he is not present locally.
 (setq custom-file (expand-file-name "custom.el" user-emacs-directory))
 (when (file-exists-p custom-file)
   (load custom-file 'noerror))
+#+END_SRC
+
+*** Libraries
+
+#+BEGIN_SRC emacs-lisp
+(use-package dash)
+(use-package diminish)
 #+END_SRC
 
 ** Packages
@@ -87,7 +98,17 @@ download a package if he is not present locally.
     (ido-mode 1)))
 #+END_SRC
 
-** Generic configuration
+*** Company
+
+#+BEGIN_SRC emacs-lisp
+(use-package company
+  :diminish company-mode
+  :init
+  (add-hook 'after-init-hook 'global-company-mode)
+  (setq-default company-tooltip-align-annotations t))
+#+END_SRC
+
+** UI
 *** Hide GUI parts
 
 #+BEGIN_SRC emacs-lisp
@@ -96,16 +117,35 @@ download a package if he is not present locally.
 (if (fboundp 'scroll-bar-mode) (scroll-bar-mode -1))
 #+END_SRC
 
+*** Theme
+
+#+BEGIN_SRC emacs-lisp
+;;(use-package solarized-theme
+;;  :init
+;;  (load-theme 'solarized-zenburn t))
+#+END_SRC
+
+*** Better =mode-line=
+
+#+BEGIN_SRC emacs-lisp
+(use-package smart-mode-line
+  :init
+  (progn
+    (setq sml/theme 'light)
+    (sml/setup)))
+#+END_SRC
+
+** Generic configuration
 *** Backup, save and lock files
 
 #+BEGIN_SRC emacs-lisp
-(setq backup-directory-alist 
+(setq backup-directory-alist
   `(("." . ,(expand-file-name (concat user-emacs-directory "backup")))))
 
 (setq delete-old-versions -1)
 (setq version-control t)
 (setq vc-make-backup-files t)
-(setq auto-save-file-name-transforms 
+(setq auto-save-file-name-transforms
   `((".*" ,(expand-file-name (concat user-emacs-directory "auto-save-list")) t)))
 
 (setq create-lockfiles nil)
