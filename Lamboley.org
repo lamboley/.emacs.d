@@ -100,6 +100,8 @@ Keep sensitive information in a separate file.
 
 *** Smex
 
+Smex is built on top of IDO and offer completion for =M-x=.
+
 #+BEGIN_SRC emacs-lisp
 (use-package smex
   :init
@@ -114,16 +116,23 @@ Keep sensitive information in a separate file.
   :diminish company-mode
   :init
   (add-hook 'after-init-hook 'global-company-mode)
-  (setq-default company-tooltip-align-annotations t))
+  (setq company-idle-delay 0)
+  (setq tab-always-indent 'complete)
+  (add-to-list 'completion-styles 'initials t)
+  (setq-default company-tooltip-align-annotations t
+		company-dabbrev-other-buffers 'all)
+  :bind (:map company-active-map) ("<tab>" . company-complete-selection))
 #+END_SRC
 
 *** Magit
 
-For =Git for Windows= :
+When using  =Git for Windows= :
+
 You should set a =%HOME%= var.
 You will have to change the path of your =git.exe= executable.
 
 For pushing see https://github.com/magit/magit/wiki/Pushing-with-Magit-from-Windows:
+
 If you are on Windows with an =http(s)= repository, you will
 be prompted with a small GUI BOX for your credential. Ensure to
 use =wincred= as a credential helper if the password is bothering you.
