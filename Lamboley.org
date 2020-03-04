@@ -107,53 +107,6 @@ Keep sensitive information in a separate file.
   :bind (("M-x" . smex)))
 #+END_SRC
 
-*** Ivy
-
-Tangle is off for this source since I use IDO.
-
-#+BEGIN_SRC emacs-lisp :tangle no
-(use-package ivy
-  :init
-  (progn
-    (setq ivy-use-virtual-buffers t)
-    (setq enable-recursive-minibuffers t)
-    (ivy-mode 1))
-  :bind (("C-x C-f" . counsel-find-file)
-	 ("M-x" . counsel-M-x)))
-#+END_SRC
-
-*** Helm
-
-Tangle is off for this source since I use IDO.
-
-#+BEGIN_SRC emacs-lisp :tangle no
-(use-package helm
-  :diminish helm-mode
-  :init
-  (progn
-    (require 'helm-config)
-    (setq helm-candidate-number-limit 100)
-    (setq helm-idle-delay 0.0
-	  helm-input-idle-delay 0.01
-	  helm-yas-display-key-on-candidate t
-	  helm-quick-update t
-	  helm-M-x-requires-pattern nil
-	  helm-ff-skip-boring-files t)
-    (helm-mode))
-  :bind (("C-c h" . helm-mini)
-	 ("C-h a" . helm-apropos)
-	 ("C-x C-b" . helm-buffers-list)
-	 ("C-x b" . helm-buffers-list)
-	 ("M-y" . helm-show-kill-ring)
-	 ("M-x" . helm-M-x)
-	 ("C-x c o" . helm-occur)
-	 ("C-x C-f" . helm-find-files)
-	 ("C-x c s" . helm-swoop)
-	 ("C-x c y" . helm-yas-complete)
-	 ("C-x c Y" . helm-yas-create-snippet-on-region)
-	 ("C-x c SPC" . helm-all-mark-rings)))
-#+END_SRC
-
 *** Company
 
 #+BEGIN_SRC emacs-lisp
@@ -182,7 +135,7 @@ Tangle is off for this source since I use IDO.
 (use-package whitespace-cleanup-mode
   :diminish whitespace-cleanup-mode
   :init
-  (setq-default show-trailing-whitespace t)
+  (setq-default show-trailing-whitespace nil)
   (add-hook 'after-init-hook 'global-whitespace-cleanup-mode))
 #+END_SRC
 
@@ -195,22 +148,13 @@ Tangle is off for this source since I use IDO.
 (if (fboundp 'scroll-bar-mode) (scroll-bar-mode -1))
 #+END_SRC
 
-*** Theme
-
-#+BEGIN_SRC emacs-lisp
-;;(use-package solarized-theme
-;;  :init
-;;  (load-theme 'solarized-zenburn t))
-#+END_SRC
-
 *** Better =mode-line=
 
 #+BEGIN_SRC emacs-lisp
 (use-package smart-mode-line
   :init
-  (progn
-    (setq sml/theme 'light)
-    (sml/setup)))
+  (setq sml/theme 'dark)
+  (sml/setup))
 #+END_SRC
 
 ** Generic configuration
