@@ -125,8 +125,18 @@ Keep sensitive information in a separate file.
   :config
   (progn
     (when (equal system-type 'windows-nt)
-      (setq magit-git-executable "C:/Program Files/Git/bin/git.exe"))
+      (setenv "GIT_ASKPASS" "git-gui--askpass")
+      (setq magit-git-executable "D:/Git/bin/git.exe"))
     (setq magit-diff-options '("-b"))))
+#+END_SRC
+
+*** Better mode-line
+
+#+BEGIN_SRC emacs-lisp
+(use-package smart-mode-line
+  :init
+  (setq sml/theme 'dark)
+  (sml/setup))
 #+END_SRC
 
 *** Trailing whitespace
@@ -139,7 +149,7 @@ Keep sensitive information in a separate file.
   (add-hook 'after-init-hook 'global-whitespace-cleanup-mode))
 #+END_SRC
 
-** UI
+** Generic configuration
 *** Hide GUI parts
 
 #+BEGIN_SRC emacs-lisp
@@ -148,16 +158,6 @@ Keep sensitive information in a separate file.
 (if (fboundp 'scroll-bar-mode) (scroll-bar-mode -1))
 #+END_SRC
 
-*** Better =mode-line=
-
-#+BEGIN_SRC emacs-lisp
-(use-package smart-mode-line
-  :init
-  (setq sml/theme 'dark)
-  (sml/setup))
-#+END_SRC
-
-** Generic configuration
 *** Save desktop
 
 #+BEGIN_SRC emacs-lisp
