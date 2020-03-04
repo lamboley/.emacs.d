@@ -116,13 +116,31 @@ Smex is built on top of IDO and offer completion for =M-x=.
   :diminish company-mode
   :init
   (add-hook 'after-init-hook 'global-company-mode)
-  (setq company-idle-delay 0)
   (setq tab-always-indent 'complete)
   (add-to-list 'completion-styles 'initials t)
+  (setq company-frontends '(company-pseudo-tooltip-frontend
+			  company-echo-metadata-frontend))
   (setq-default company-tooltip-align-annotations t
-		company-dabbrev-other-buffers 'all)
+		company-dabbrev-other-buffers 'all
+		company-idle-delay 0
+		company-minimum-prefix-length 1
+		company-tooltip-limit 20)
+  (deftheme lamboley-overrides)
+  (let ((class '((class color) (min-colors 257)))
+      (terminal-class '((class color) (min-colors 89)))))
+  (custom-theme-set-faces
+   'lamboley-overrides
+   `(company-tooltip
+     ((t :foreground "#1B1D1E"
+	 :background "#F8F8F0"
+	 :underline t)))
+  `(company-tooltip-selection
+     ((t :background "#349B8D"
+	 :foreground "#F8F8F0"))))
   :bind (:map company-active-map) ("<tab>" . company-complete-selection))
 #+END_SRC
+
+Change de background of the =company-tooltip=
 
 *** Magit
 
