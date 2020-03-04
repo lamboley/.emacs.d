@@ -119,6 +119,15 @@ Keep sensitive information in a separate file.
 
 *** Magit
 
+For =Git for Windows= :
+You should set a =%HOME%= var.
+You will have to change the path of your =git.exe= executable.
+
+For pushing see https://github.com/magit/magit/wiki/Pushing-with-Magit-from-Windows:
+If you are on Windows with an =http(s)= repository, you will
+be prompted with a small GUI BOX for your credential. Ensure to
+use =wincred= as a credential helper if the password is bothering you.
+
 #+BEGIN_SRC emacs-lisp
 (use-package magit
   :defer t
