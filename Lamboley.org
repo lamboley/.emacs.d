@@ -1,4 +1,5 @@
 #+TITLE: Lucas Lamboley's Emacs configuration
+#+STARTUP: content
 #+PROPERTY: header-args:emacs-lisp :tangle "~/.emacs.d/init.el"
 
 * About this file
@@ -68,6 +69,13 @@ Keep sensitive information in a separate file.
 #+BEGIN_SRC emacs-lisp
 (defvar my-private-file (expand-file-name "private.el" user-emacs-directory))
 (load my-private-file 'noerror)
+#+END_SRC
+
+*** Personnal information
+
+#+BEGIN_SRC emacs-lisp
+(setq user-full-name "Lucas Lamboley"
+      user-mail-address "lucaslamboley@outlook.com")
 #+END_SRC
 
 *** Custom file
