@@ -129,18 +129,16 @@ Smex is built on top of IDO and offer completion for =M-x=.
   (let ((class '((class color) (min-colors 257)))
       (terminal-class '((class color) (min-colors 89)))))
   (custom-theme-set-faces
-   'lamboley-overrides
-   `(company-tooltip
-     ((t :foreground "#1B1D1E"
-	 :background "#F8F8F0"
-	 :underline t)))
-  `(company-tooltip-selection
-     ((t :background "#349B8D"
-	 :foreground "#F8F8F0"))))
+    'lamboley-overrides
+    `(company-tooltip
+      ((t :foreground "#1B1D1E"
+	  :background "#F8F8F0"
+	  :underline t)))
+    `(company-tooltip-selection
+      ((t :background "#349B8D"
+	  :foreground "#F8F8F0"))))
   :bind (:map company-active-map) ("<tab>" . company-complete-selection))
 #+END_SRC
-
-Change de background of the =company-tooltip=
 
 *** Magit
 
@@ -166,6 +164,16 @@ use =wincred= as a credential helper if the password is bothering you.
     (setq magit-diff-options '("-b"))))
 #+END_SRC
 
+*** Flycheck
+
+#+BEGIN_SRC emacs-lisp
+(use-package flycheck
+  :init
+  (add-hook 'after-init-hook 'global-flycheck-mode)
+  (setq flycheck-check-syntax-automatically '(mode-enabled save)
+	flycheck-display-errors-function #'flycheck-display-error-messages-unless-error-list))
+#+END_SRC
+
 *** Better mode-line
 
 #+BEGIN_SRC emacs-lisp
@@ -183,6 +191,37 @@ use =wincred= as a credential helper if the password is bothering you.
   :init
   (setq-default show-trailing-whitespace nil)
   (add-hook 'after-init-hook 'global-whitespace-cleanup-mode))
+#+END_SRC
+
+** Language
+*** Perl5
+
+#+BEGIN_SRC emacs-lisp
+(mapc
+  (lambda (pair)
+    (if (eq (cdr pair) 'perl-mode)
+      (setcdr pair 'cperl-mode)))
+  (append auto-mode-alist interpreter-mode-alist))
+
+(setq cperl-invalid-face nil
+      cperl-hairy t
+      cperl-indent-level 4
+      cperl-indent-parens-as-block t
+      cperl-close-paren-offset -4
+      cperl-continued-statement-offset 4
+      cperl-tab-always-indent t
+      cperl-indent-subs-specially nil)
+#+END_SRC
+
+*** Lua
+
+#+BEGIN_SRC emacs-lisp
+(autoload 'lua-mode "lua-mode" "Lua editing mode." t)
+(add-to-list 'auto-mode-alist '("\\.lua$" . lua-mode))
+(add-to-list 'interpreter-mode-alist '("lua" . lua-mode))
+
+(setq lua-indent-level 4)
+(setq lua-indent-nested-block-content-align nil)
 #+END_SRC
 
 ** Generic configuration
