@@ -217,13 +217,12 @@ use =wincred= as a credential helper if the popups bother you.
 
 #+BEGIN_SRC emacs-lisp
 (use-package magit
-  :defer t
   :config
-  (progn
-    (when (equal system-type 'windows-nt)
-      (setenv "GIT_ASKPASS" "git-gui--askpass")
-      (setq magit-git-executable "D:/Git/bin/git.exe"))
-    (setq magit-diff-options '("-b"))))
+  (setq magit-diff-options '("-b"))
+  (when (equal system-type 'windows-nt)
+    (setenv "GIT_ASKPASS" "git-gui--askpass")
+    (setq magit-git-executable "C:/Program Files/Git/bin/git.exe"))
+  :bind (("C-x t" . magit-status)))
 #+END_SRC
 
 *** Better mode-line
