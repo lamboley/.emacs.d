@@ -209,6 +209,17 @@ Disable =flycheck= on the fly, use it only when we save the buffer.
   :bind (:map company-active-map) ("<tab>" . company-complete-selection))
 #+END_SRC
 
+*** Undo tree
+
+#+BEGIN_SRC emacs-lisp
+(use-package undo-tree
+  :diminish undo-tree-mode
+  :config
+  (global-undo-tree-mode)
+  (setq undo-tree-visualizer-timestamps t
+	undo-tree-visualizer-diff t))
+#+END_SRC
+
 *** Magit
 
 If you are on Windows with an =http(s)= repository, you will
@@ -235,6 +246,11 @@ use =wincred= as a credential helper if the popups bother you.
 #+END_SRC
 
 ** Enhance editing
+*** Frequent file
+
+#+BEGIN_SRC emacs-lisp
+(set-register ?r '(file . "~/.emacs.d/Lamboley.org"))
+#+END_SRC
 
 *** Trailing whitespace
 
@@ -296,6 +312,15 @@ when you use =C-c '=.
 
 #+BEGIN_SRC emacs-lisp
 (setq org-edit-src-content-indentation 0)
+#+END_SRC
+
+*** Disable =flycheck= when editing  block source
+
+#+BEGIN_SRC emacs-lisp
+(defun my-disable-fylcheck-in-org-src-block ()
+  (setq-local flycheck-disabled-checkers '(emacs-lisp-checkdoc)))
+
+(add-hook 'org-src-mode-hook 'my-disable-fylcheck-in-org-src-block)
 #+END_SRC
 
 ** Generic configuration
