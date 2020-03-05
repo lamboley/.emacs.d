@@ -4,7 +4,7 @@
 #+PROPERTY: header-args:emacs-lisp :tangle "~/.emacs.d/init.el"
 
 * About this file
-** What is this file
+** What is this file ?
 
 This file is an org file used by =org-mode= from Emacs.
 
@@ -106,7 +106,7 @@ to display it.
 
 *** Private data
 
-Keep sensitive information in a separate file.
+Keep sensitive information such as password in a separate file.
 
 #+BEGIN_SRC emacs-lisp
 (defvar my-private-file (expand-file-name "private.el" user-emacs-directory))
@@ -114,8 +114,10 @@ Keep sensitive information in a separate file.
   (load my-private-file))
 #+END_SRC
 
-** Packages
+** Enhancing Emacs
 *** Setting up =Ibuffer=
+
+=Ibuffer= is an advanced replacement for =BufferMenu=.
 
 #+BEGIN_SRC emacs-lisp
 (use-package ibuffer
@@ -148,7 +150,6 @@ Disable =flycheck= on the fly, use it only when we save the buffer.
 (use-package flycheck
   :init
   (setq flycheck-check-syntax-automatically '(mode-enabled save)
-
 	flycheck-display-errors-function #'flycheck-display-error-messages-unless-error-list)
   :config
   (add-hook 'after-init-hook 'global-flycheck-mode))
@@ -159,7 +160,6 @@ Disable =flycheck= on the fly, use it only when we save the buffer.
 #+BEGIN_SRC emacs-lisp
 (use-package ido
   :diminish ido-mode
-  :commands ido-mode
   :init
   (setq ido-enable-flex-matching t
 	ido-everywhere t)
@@ -167,9 +167,14 @@ Disable =flycheck= on the fly, use it only when we save the buffer.
     :commands ido-ubiquitous-mode)
   (use-package smex
     :init
+    (setq smex-history-length 10
+	  smex-flex-matching t)
+    :config
     (smex-initialize)
     :bind
-    (("M-x" . smex))))
+    (("M-x" . smex)))
+  :config
+  (ido-mode 1))
 #+END_SRC
 
 *** Company
@@ -178,7 +183,6 @@ Disable =flycheck= on the fly, use it only when we save the buffer.
 (use-package company
   :diminish company-mode
   :init
-  (add-hook 'after-init-hook 'global-company-mode)
   (setq tab-always-indent 'complete)
   (add-to-list 'completion-styles 'initials t)
   (setq company-frontends '(company-pseudo-tooltip-frontend
@@ -188,33 +192,28 @@ Disable =flycheck= on the fly, use it only when we save the buffer.
 		company-idle-delay 0
 		company-minimum-prefix-length 1
 		company-tooltip-limit 20)
+  :config
+  (add-hook 'after-init-hook 'global-company-mode)
   (deftheme lamboley-overrides)
   (let ((class '((class color) (min-colors 257)))
-      (terminal-class '((class color) (min-colors 89)))))
+	(terminal-class '((class color) (min-colors 89)))))
   (custom-theme-set-faces
-    'lamboley-overrides
-    `(company-tooltip
-      ((t :foreground "#1B1D1E"
-	  :background "#F8F8F0"
-	  :underline t)))
-    `(company-tooltip-selection
-      ((t :background "#349B8D"
-	  :foreground "#F8F8F0"))))
+   'lamboley-overrides
+   `(company-tooltip
+     ((t :foreground "#1B1D1E"
+	 :background "#F8F8F0"
+	 :underline t)))
+   `(company-tooltip-selection
+     ((t :background "#349B8D"
+	 :foreground "#F8F8F0"))))
   :bind (:map company-active-map) ("<tab>" . company-complete-selection))
 #+END_SRC
 
 *** Magit
 
-When using  =Git for Windows= :
-
-You should set a =%HOME%= var.
-You will have to change the path of your =git.exe= executable.
-
-For pushing see https://github.com/magit/magit/wiki/Pushing-with-Magit-from-Windows:
-
 If you are on Windows with an =http(s)= repository, you will
 be prompted with a small GUI BOX for your credential. Ensure to
-use =wincred= as a credential helper if the password is bothering you.
+use =wincred= as a credential helper if the popups bother you.
 
 #+BEGIN_SRC emacs-lisp
 (use-package magit
@@ -227,8 +226,6 @@ use =wincred= as a credential helper if the password is bothering you.
     (setq magit-diff-options '("-b"))))
 #+END_SRC
 
-
-
 *** Better mode-line
 
 #+BEGIN_SRC emacs-lisp
@@ -238,13 +235,7 @@ use =wincred= as a credential helper if the password is bothering you.
   (sml/setup))
 #+END_SRC
 
-*** Org mode
-
-#+BEGIN_SRC emacs-lisp
-(setq org-edit-src-content-indentation 0)
-
-
-#+END_SRC
+** Enhance editing
 
 *** Trailing whitespace
 
@@ -253,10 +244,31 @@ use =wincred= as a credential helper if the password is bothering you.
   :diminish whitespace-cleanup-mode
   :init
   (setq-default show-trailing-whitespace nil)
+  :config
   (add-hook 'after-init-hook 'global-whitespace-cleanup-mode))
 #+END_SRC
 
-** Language
+*** Show line and column numbers
+
+#+BEGIN_SRC emacs-lisp
+(when (version<= "26.0.50" emacs-version )
+  (global-display-line-numbers-mode))
+(column-number-mode 1)
+#+END_SRC
+
+*** Final newline
+
+#+BEGIN_SRC emacs-lisp
+(setq require-final-newline t)
+#+END_SRC
+
+*** Show matching paren
+
+#+BEGIN_SRC emacs-lisp
+(show-paren-mode 1)
+#+END_SRC
+
+** Programming language
 *** Perl5
 
 #+BEGIN_SRC emacs-lisp
@@ -276,15 +288,15 @@ use =wincred= as a credential helper if the password is bothering you.
       cperl-indent-subs-specially nil)
 #+END_SRC
 
-*** Lua
+** Setting up =org-mode=
+
+*** Better default behavior
+
+This line stop =org-mode= from indenting the content of block
+when you use =C-c '=.
 
 #+BEGIN_SRC emacs-lisp
-(autoload 'lua-mode "lua-mode" "Lua editing mode." t)
-(add-to-list 'auto-mode-alist '("\\.lua$" . lua-mode))
-(add-to-list 'interpreter-mode-alist '("lua" . lua-mode))
-
-(setq lua-indent-level 4)
-(setq lua-indent-nested-block-content-align nil)
+(setq org-edit-src-content-indentation 0)
 #+END_SRC
 
 ** Generic configuration
@@ -296,13 +308,17 @@ use =wincred= as a credential helper if the password is bothering you.
 (if (fboundp 'scroll-bar-mode) (scroll-bar-mode -1))
 #+END_SRC
 
-*** Save desktop
+*** Restore session
 
 #+BEGIN_SRC emacs-lisp
 (setq desktop-path (list user-emacs-directory)
-      desktop-auto-save-timeout 600
-      desktop-restore-frames t)
+      desktop-auto-save-timeout 600)
 (desktop-save-mode 1)
+
+(use-package session)
+(setq session-save-file-coding-system 'utf-8)
+(setq session-name-disable-regexp "\\(?:\\`'/tmp\\|\\.git/[A-Z_]+\\'\\)")
+(add-hook 'after-init-hook 'session-initialize)
 #+END_SRC
 
 *** Backup, save and lock files
@@ -333,13 +349,7 @@ use =wincred= as a credential helper if the password is bothering you.
 
 *** Miscellaneous
 
-Remove useless =*scratch*= buffer.
-
-#+BEGIN_SRC emacs-lisp
-(if (get-buffer "*scratch*") (kill-buffer "*scratch*"))
-#+END_SRC
-
-Always the use y-or-n over yes-or-no because I am lazy.
+Always use y-or-n over yes-or-no because I am lazy.
 
 #+BEGIN_SRC emacs-lisp
 (defalias 'yes-or-no-p 'y-or-n-p)
@@ -351,31 +361,6 @@ Show date and time in the =mode-line=.
 (setq display-time-day-and-date t
       display-time-24hr-format t)
 (display-time)
-#+END_SRC
-
-Show matching pairs of parantheses and other characters.
-
-#+BEGIN_SRC emacs-lisp
-(show-paren-mode 1)
-#+END_SRC
-
-Show line numbers.
-
-#+BEGIN_SRC emacs-lisp
-(when (version<= "26.0.50" emacs-version )
-  (global-display-line-numbers-mode))
-#+END_SRC
-
-Show column number in =mode-line=.
-
-#+BEGIN_SRC emacs-lisp
-(column-number-mode 1)
-#+END_SRC
-
-Always insert final newline.
-
-#+BEGIN_SRC emacs-lisp
-(setq require-final-newline t)
 #+END_SRC
 
 ** Emacs's bottom header package
