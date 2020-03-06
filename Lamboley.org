@@ -121,11 +121,11 @@ Keep sensitive information such as password in a separate file.
 
 #+BEGIN_SRC emacs-lisp
 (use-package ibuffer
-  :init
+  :config
   (setq-default ibuffer-show-empty-filter-groups nil)
   (require 'ibuf-ext)
   (add-to-list 'ibuffer-never-show-predicates "^\\*")
-  :config
+
   (define-ibuffer-column size-h
     (:name "Size" :inline t)
     (file-size-human-readable (buffer-size)))
@@ -148,10 +148,9 @@ Disable =flycheck= on the fly, use it only when we save the buffer.
 
 #+BEGIN_SRC emacs-lisp
 (use-package flycheck
-  :init
+  :config
   (setq flycheck-check-syntax-automatically '(mode-enabled save)
 	flycheck-display-errors-function #'flycheck-display-error-messages-unless-error-list)
-  :config
   (add-hook 'after-init-hook 'global-flycheck-mode))
 #+END_SRC
 
@@ -246,10 +245,19 @@ use =wincred= as a credential helper if the popups bother you.
 #+END_SRC
 
 ** Enhance editing
-*** Frequent file
+*** Easier access for specific file
+
+Add a shortkey on =C-x j= to open specific file.
 
 #+BEGIN_SRC emacs-lisp
-(set-register ?r '(file . "~/.emacs.d/Lamboley.org"))
+(defun my-shortkey-frequent-file (choice)
+  (interactive)
+  (cond
+   ((eq choice ?o)
+    (find-file "~/.emacs.d/Lamboley.org"))
+   (t (message "Quit"))))
+
+(global-set-key (kbd "C-x j") 'my-shortkey-frequent-file)
 #+END_SRC
 
 *** Trailing whitespace
@@ -257,9 +265,8 @@ use =wincred= as a credential helper if the popups bother you.
 #+BEGIN_SRC emacs-lisp
 (use-package whitespace-cleanup-mode
   :diminish whitespace-cleanup-mode
-  :init
-  (setq-default show-trailing-whitespace nil)
   :config
+  (setq-default show-trailing-whitespace nil)
   (add-hook 'after-init-hook 'global-whitespace-cleanup-mode))
 #+END_SRC
 
@@ -314,7 +321,7 @@ when you use =C-c '=.
 (setq org-edit-src-content-indentation 0)
 #+END_SRC
 
-*** Disable =flycheck= when editing  block source
+*** Disable =flycheck= when editing block source
 
 #+BEGIN_SRC emacs-lisp
 (defun my-disable-fylcheck-in-org-src-block ()
@@ -373,7 +380,7 @@ when you use =C-c '=.
 
 *** Miscellaneous
 
-Always use y-or-n over yes-or-no because I am lazy.
+Always use y-or-n over yes-or-no because it is shorter.
 
 #+BEGIN_SRC emacs-lisp
 (defalias 'yes-or-no-p 'y-or-n-p)
