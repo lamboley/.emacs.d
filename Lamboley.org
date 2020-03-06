@@ -1,5 +1,5 @@
 #+TITLE: Lucas Lamboley's Emacs configuration
-#+OPTIONS: toc:3 h:3
+#+OPTIONS: toc:4 h:4
 #+STARTUP: content
 #+PROPERTY: header-args:emacs-lisp :tangle "~/.emacs.d/init.el"
 
@@ -177,6 +177,7 @@ Disable =flycheck= on the fly, use it only when we save the buffer.
 #+END_SRC
 
 *** Company
+**** Setting up =company-mode=
 
 #+BEGIN_SRC emacs-lisp
 (use-package company
@@ -208,6 +209,11 @@ Disable =flycheck= on the fly, use it only when we save the buffer.
   :bind (:map company-active-map) ("<tab>" . company-complete-selection))
 #+END_SRC
 
+**** Setting up =company-lua=
+
+#+BEGIN_SRC emacs-lisp
+#+END_SRC
+
 *** Undo tree
 
 #+BEGIN_SRC emacs-lisp
@@ -217,6 +223,18 @@ Disable =flycheck= on the fly, use it only when we save the buffer.
   (global-undo-tree-mode)
   (setq undo-tree-visualizer-timestamps t
 	undo-tree-visualizer-diff t))
+#+END_SRC
+
+*** Projectile
+
+#+BEGIN_SRC emacs-lisp
+(use-package projectile
+  :config
+  (setq-default projectile-mode-line-prefix " Proj")
+  (add-hook 'after-init-hook 'projectile-mode)
+  :bind (:map projectile-mode-map ("C-c p" . projectile-command-map)))
+
+;; ibuffer-projectile ?
 #+END_SRC
 
 *** Magit
@@ -229,10 +247,20 @@ use =wincred= as a credential helper if the popups bother you.
 (use-package magit
   :config
   (setq magit-diff-options '("-b"))
+  (setq magit-refresh-status-buffer nil)
   (when (equal system-type 'windows-nt)
     (setenv "GIT_ASKPASS" "git-gui--askpass")
     (setq magit-git-executable "C:/Program Files/Git/bin/git.exe"))
   :bind (("C-x t" . magit-status)))
+#+END_SRC
+
+*** origami
+
+#+BEGIN_SRC emacs-lisp
+(use-package origami
+  :bind
+  (:map origami-mode-map ("C-c F" . origami-recursively-toggle-node))
+  (:map origami-mode-map ("C-c f" . origami-toggle-all-nodes)))
 #+END_SRC
 
 *** Better mode-line
@@ -245,6 +273,12 @@ use =wincred= as a credential helper if the popups bother you.
 #+END_SRC
 
 ** Enhance editing
+*** Default Indent
+
+#+BEGIN_SRC emacs-lisp
+(setq-default indent-tabs-mode nil)
+#+END_SRC
+
 *** Easier access for specific file
 
 Add a shortkey on =C-x j= to open specific file.
@@ -291,7 +325,34 @@ Add a shortkey on =C-x j= to open specific file.
 #+END_SRC
 
 ** Programming language
+*** Markdown
+
+Support for the Markdown language.
+
+#+BEGIN_SRC emacs-lisp
+(use-package markdown-mode
+  :commands (markdown-mode gfm-mode)
+  :mode (("README\\.md\\'" . gfm-mode)
+	 ("\\.md\\'" . markdown-mode))
+  :init
+  (setq markdown-command "multimarkdown"))
+#+END_SRC
+
+*** CSV
+
+Support for the CSV language.
+
+#+BEGIN_SRC emacs-lisp
+(use-package csv-mode
+  :commands csv-mode
+  :mode "\\.[Cc][Ss][Vv]\\'"
+  :init
+  (setq csv-separators '("," ";" "|" " ")))
+#+END_SRC
+
 *** Perl5
+
+Support for Perl5 language. We use =cperl-mode= over =perl-mode=.
 
 #+BEGIN_SRC emacs-lisp
 (mapc
@@ -310,15 +371,28 @@ Add a shortkey on =C-x j= to open specific file.
       cperl-indent-subs-specially nil)
 #+END_SRC
 
+*** Lua
+
+Support for Lua language.
+
+#+BEGIN_SRC emacs-lisp
+(use-package lua-mode
+  :commands lua-mode
+  :mode "\\.lua\\'"
+  :interpreter "lua"
+  :init
+  (setq lua-indent-level 2))
+#+END_SRC
+
 ** Setting up =org-mode=
+
+*** TODO Setup org-mode
 
 *** Better default behavior
 
-This line stop =org-mode= from indenting the content of block
-when you use =C-c '=.
-
 #+BEGIN_SRC emacs-lisp
 (setq org-edit-src-content-indentation 0)
+(setq org-log-done 'time)
 #+END_SRC
 
 *** Disable =flycheck= when editing block source
