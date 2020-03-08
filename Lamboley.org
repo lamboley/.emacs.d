@@ -209,11 +209,6 @@ Disable =flycheck= on the fly, use it only when we save the buffer.
   :bind (:map company-active-map) ("<tab>" . company-complete-selection))
 #+END_SRC
 
-**** Setting up =company-lua=
-
-#+BEGIN_SRC emacs-lisp
-#+END_SRC
-
 *** Undo tree
 
 #+BEGIN_SRC emacs-lisp
@@ -231,10 +226,9 @@ Disable =flycheck= on the fly, use it only when we save the buffer.
 (use-package projectile
   :config
   (setq-default projectile-mode-line-prefix " Proj")
-  (add-hook 'after-init-hook 'projectile-mode)
-  :bind (:map projectile-mode-map ("C-c p" . projectile-command-map)))
-
-;; ibuffer-projectile ?
+  (setq projectile-project-search-path '("~/.emacs.d/" "C:/Program Files (x86)/WoW/World of Warcraft/_retail_/Interface/Addons/Aberon"))
+  (projectile-mode +1)  
+  :bind (:map projectile-mode-map) ("C-c p" . projectile-command-map))
 #+END_SRC
 
 *** Magit
@@ -254,6 +248,13 @@ use =wincred= as a credential helper if the popups bother you.
   :bind (("C-x t" . magit-status)))
 #+END_SRC
 
+*** Winner-mode
+
+#+BEGIN_SRC emacs-lisp
+(use-package winner
+  :defer t)
+#+END_SRC
+
 *** origami
 
 #+BEGIN_SRC emacs-lisp
@@ -270,6 +271,55 @@ use =wincred= as a credential helper if the popups bother you.
   :init
   (setq sml/theme 'dark)
   (sml/setup))
+#+END_SRC
+
+*** Which-key
+
+#+BEGIN_SRC emacs-lisp
+(use-package which-key
+  :diminish which-key-mode
+  :config
+  (which-key-mode))
+#+END_SRC
+
+*** Windmove
+
+#+BEGIN_SRC emacs-lisp
+(use-package windmove
+  :bind
+  (("<f2> <right>" . windmove-right)
+   ("<f2> <left>" . windmove-left)
+   ("<f2> <up>" . windmove-up)
+   ("<f2> <down>" . windmove-down)))
+#+END_SRC
+
+*** Hydra and key-chord
+**** Hydra 
+
+For =my-hydra-zoom=, Emacs can't control the font size in a terminal, so
+this will not work.
+
+#+BEGIN_SRC emacs-lisp
+(use-package hydra
+  :config
+  (defhydra my-hydra-key-chord ()
+    "Main"
+    ("." repeat)
+    ("+" text-scale-increase)
+    ("-" text-scale-decrease)))
+#+END_SRC
+
+**** Key-chord
+
+#+BEGIN_SRC emacs-lisp
+(use-package key-chord
+  :init
+  (progn
+    (setq key-chord-one-key-delay 0.16)
+    (key-chord-mode 1)
+    (key-chord-define-global "uu" 'undo)
+    (key-chord-define-global "kk" 'kill-whole-line)
+    (key-chord-define-global "hh" 'my-hydra-key-chord/body)))
 #+END_SRC
 
 ** Enhance editing
@@ -324,6 +374,12 @@ Add a shortkey on =C-x j= to open specific file.
 (show-paren-mode 1)
 #+END_SRC
 
+*** Use UTF-8
+
+#+BEGIN_SRC emacs-lisp
+(prefer-coding-system 'utf-8)
+#+END_SRC
+
 ** Programming language
 *** Markdown
 
@@ -348,6 +404,14 @@ Support for the CSV language.
   :mode "\\.[Cc][Ss][Vv]\\'"
   :init
   (setq csv-separators '("," ";" "|" " ")))
+#+END_SRC
+
+*** XML
+
+Support for the XML language.
+
+#+BEGIN_SRC emacs-lisp
+(setq nxml-slash-auto-complete-flag t)
 #+END_SRC
 
 *** Perl5
@@ -381,13 +445,11 @@ Support for Lua language.
   :mode "\\.lua\\'"
   :interpreter "lua"
   :init
-  (setq lua-indent-level 2))
+  (setq lua-indent-level 4))
 #+END_SRC
 
 ** Setting up =org-mode=
-
 *** TODO Setup org-mode
-
 *** Better default behavior
 
 #+BEGIN_SRC emacs-lisp
@@ -430,13 +492,13 @@ Support for Lua language.
 
 #+BEGIN_SRC emacs-lisp
 (setq backup-directory-alist
-  `(("." . ,(expand-file-name (concat user-emacs-directory "backup")))))
+      `(("." . ,(expand-file-name (concat user-emacs-directory "backup")))))
 
 (setq delete-old-versions -1)
 (setq version-control t)
 (setq vc-make-backup-files t)
 (setq auto-save-file-name-transforms
-  `((".*" ,(expand-file-name (concat user-emacs-directory "auto-save-list")) t)))
+      `((".*" ,(expand-file-name (concat user-emacs-directory "auto-save-list")) t)))
 
 (setq create-lockfiles nil)
 #+END_SRC
