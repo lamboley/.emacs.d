@@ -94,7 +94,7 @@ is both performance-oriented and tidy.
 
   (setq use-package-verbose nil
         use-package-expand-minimally t
-        use-package-always-ensure t))
+        use-package-always-ensure nil))
 
 (setq disabled-command-function nil)
 
@@ -545,7 +545,7 @@ Support for the CSV language.
 
 Support for the XML language.
 
-#+BEGIN_SRC emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp
 (use-package nxml-mode
   :commands nxml-mode
   :init
@@ -656,10 +656,12 @@ Support for Lua language.
 *** Recent file
 
 #+BEGIN_SRC emacs-lisp
-(require 'recentf)
-(setq recentf-max-saved-items 200
-      recentf-max-menu-items 25)
-(recentf-mode)
+(use-package recentf
+  :defer 10
+  :config
+  (setq recentf-max-saved-items 200
+        recentf-max-menu-items 25)
+  (recentf-mode 1))
 #+END_SRC
 
 *** Copy filename to clipboard
