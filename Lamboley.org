@@ -210,6 +210,7 @@ Keep sensitive information such as password in a separate file.
                  (bind-key "M-n" #'flycheck-next-error ,(cdr where))
                  (bind-key "M-p" #'flycheck-previous-error ,(cdr where)))))
   :config
+  (global-flycheck-mode)
   (defalias 'show-error-at-point-soon
     'flycheck-show-error-at-point)
 
@@ -362,6 +363,45 @@ use =wincred= as a credential helper if the popups bother you.
   :config
   (setq sml/theme 'dark)
   (sml/setup))
+#+END_SRC
+
+*** Anki
+
+#+BEGIN_SRC emacs-lisp
+(use-package anki-editor
+  :commands anki-editor-submit)
+#+END_SRC
+
+*** Beacon
+
+#+BEGIN_SRC emacs-lisp
+(use-package beacon
+  :diminish
+  :commands beacon-mode)
+#+END_SRC
+
+*** Centered cursor
+
+#+BEGIN_SRC emacs-lisp
+(use-package centered-cursor-mode
+  :commands centered-cursor-mode)
+#+END_SRC
+
+*** Colum hl
+
+#+BEGIN_SRC emacs-lisp
+(use-package col-highlight
+  :commands col-highlight-mode)
+#+END_SRC
+
+*** Change cursor
+
+#+BEGIN_SRC emacs-lisp
+(use-package cursor-chg
+  :commands change-cursor-mode
+  :config
+  (change-cursor-mode 1)
+  (toggle-cursor-type-when-idle 1))
 #+END_SRC
 
 *** Which-key
