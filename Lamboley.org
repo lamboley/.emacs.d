@@ -29,6 +29,42 @@ if it is not there.
 #+END_SRC
 
 ** Starting up
+*** Emacs initialisation
+
+Store emacs start time for later use.
+
+#+BEGIN_SRC emacs-lisp
+(defconst emacs-start-time (current-time))
+#+END_SRC
+
+Disable file name handler and reduce garbage collection during startup
+
+#+BEGIN_SRC emacs-lisp
+(defvar file-name-handler-alist-old file-name-handler-alist)
+
+(setq package-enable-at-startup nil
+      file-name-handler-alist nil
+      message-log-max 16384
+      gc-cons-threshold 402653184
+      gc-cons-percentage 0.6
+      auto-window-vscroll nil)
+
+(add-hook 'after-init-hook
+          `(lambda ()
+             (setq file-name-handler-alist file-name-handler-alist-old
+                   gc-cons-threshold 800000
+                   gc-cons-percentage 0.1)
+             (garbage-collect)) t)
+#+END_SRC
+
+*** Utility function
+
+#+BEGIN_SRC emacs-lisp
+(eval-and-compile
+  (defun emacs-path (path)
+    (expand-file-name path user-emacs-directory)))
+#+END_SRC
+
 *** Avoid loading outdated elisp file
 
 Since Emacs 24.4, this option allow to load an =.el= file if
@@ -46,19 +82,26 @@ is both performance-oriented and tidy.
 
 #+BEGIN_SRC emacs-lisp
 (package-initialize)
-(add-to-list 'package-archives '("melpa-stable" . "https://stable.melpa.org/packages/") t)
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
-(add-to-list 'package-archives '("org" . "https://orgmode.org/elpa/") t)
+;;(add-to-list 'package-archives '("org" . "https://orgmode.org/elpa/") t)
 
 (unless (package-installed-p 'use-package)
   (package-refresh-contents)
   (package-install 'use-package))
 
-(setq use-package-verbose t)
-(setq use-package-always-ensure t)
+(eval-when-compile
+  (require 'use-package)
+
+  (setq use-package-verbose nil
+        use-package-expand-minimally t
+        use-package-always-ensure t))
+
+(setq disabled-command-function nil)
 
 (eval-when-compile
-  (require 'use-package))
+  (dolist (sym '(flet lisp-complete-symbol))
+    (setplist sym (use-package-plist-delete (symbol-plist sym)
+                                            'byte-obsolete-info))))
 #+END_SRC
 
 *** Setting up the package =auto-compile=
@@ -67,39 +110,27 @@ This will compile any =.el= file before they are loaded or when they are
 saved. This package guarantee that Emacs never loads outdated byte
 code files.
 
-By default, we hide the =Compile-Log= buffer, use =M-x auto-compile-display-log=
-to display it.
-
 #+BEGIN_SRC emacs-lisp
 (use-package auto-compile
   :config
-  (setq auto-compile-display-buffer nil)
   (auto-compile-on-load-mode)
   (auto-compile-on-save-mode))
 #+END_SRC
 
-*** Installing =diminish= library
+*** Installing library
 
 #+BEGIN_SRC emacs-lisp
-(use-package diminish)
-#+END_SRC
-
-*** Benchmark init time
-
-#+BEGIN_SRC emacs-lisp
-(defun my-show-init-time ()
-  "Show Emacs's init time in the buffer Messages"
-  (message "init completed in %.2fms"
-	   (* 1000.0 (float-time
-		      (time-subtract after-init-time before-init-time)))))
-
-(add-hook 'after-init-hook 'my-show-init-time)
+(use-package async    :defer t)
+(use-package dash     :defer t)
+(use-package deferred :defer t)
+(use-package diminish :demand t)
+(use-package popup    :defer t)
 #+END_SRC
 
 *** Load custom file if exist
 
 #+BEGIN_SRC emacs-lisp
-(setq custom-file (expand-file-name "custom.el" user-emacs-directory))
+(setq custom-file (emacs-path "custom.el"))
 (when (file-readable-p custom-file)
   (load custom-file))
 #+END_SRC
@@ -109,25 +140,25 @@ to display it.
 Keep sensitive information such as password in a separate file.
 
 #+BEGIN_SRC emacs-lisp
-(defvar my-private-file (expand-file-name "private.el" user-emacs-directory))
+(defvar my-private-file (emacs-path "private.el"))
 (when (file-readable-p my-private-file)
   (load my-private-file))
 #+END_SRC
 
 ** Enhancing Emacs
-*** Setting up =Ibuffer=
-
-=Ibuffer= is an advanced replacement for =BufferMenu=.
+*** Replacement for  =BufferMenu=
+**** Ibuffer Mode
 
 #+BEGIN_SRC emacs-lisp
 (use-package ibuffer
+  :bind ("C-x C-b" . ibuffer)
   :config
-  (setq-default ibuffer-show-empty-filter-groups nil)
   (require 'ibuf-ext)
   (add-to-list 'ibuffer-never-show-predicates "^\\*")
 
-  (define-ibuffer-column size-h
-    (:name "Size" :inline t)
+  (setq ibuffer-show-empty-filter-groups nil)
+
+  (define-ibuffer-column size-h (:name "Size" :inline t)
     (file-size-human-readable (buffer-size)))
 
   (setq ibuffer-formats
@@ -138,42 +169,97 @@ Keep sensitive information such as password in a separate file.
 		" "
 		(mode 16 16 :left :elide)
 		" "
-		filename-and-process)))
-  :bind (("C-x C-b" . ibuffer)))
+		filename-and-process))))
 #+END_SRC
 
-*** Flycheck
+**** ibuffer-ext
 
-Disable =flycheck= on the fly, use it only when we save the buffer.
+#+BEGIN_SRC emacs-lisp :tangle no
+(use-package ibuf-ext
+  :after ibuffer
+  :init 
+  (add-to-list 'ibuffer-never-show-predicates "^\\*"))
+#+END_SRC
+
+*** Check syntax on the fly
+**** Flycheck Mode
 
 #+BEGIN_SRC emacs-lisp
 (use-package flycheck
+  :commands (flycheck-mode
+             flycheck-next-error
+             flycheck-previous-error)
+  :init
+  (dolist (where '((emacs-lisp-mode-hook . emacs-lisp-mode-map)
+                   (lua-mode-hook        . lua-mode-map)
+                   (cperl-mode-hook      . cperl-mode-map)))
+    (add-hook (car where)
+              `(lambda ()
+                 (bind-key "M-n" #'flycheck-next-error ,(cdr where))
+                 (bind-key "M-p" #'flycheck-previous-error ,(cdr where)))))
   :config
-  (setq flycheck-check-syntax-automatically '(mode-enabled save)
-	flycheck-display-errors-function #'flycheck-display-error-messages-unless-error-list)
-  (add-hook 'after-init-hook 'global-flycheck-mode))
+  (defalias 'show-error-at-point-soon
+    'flycheck-show-error-at-point)
+
+  (defun magnars/adjust-flycheck-automatic-syntax-eagerness ()
+    "Adjust how often we check for errors based on if there are any.
+  This lets us fix any errors as quickly as possible, but in a
+  clean buffer we're an order of magnitude laxer about checking."
+    (setq flycheck-idle-change-delay
+          (if flycheck-current-errors 0.3 3.0)))
+
+  (make-variable-buffer-local 'flycheck-idle-change-delay)
+  (add-hook 'flycheck-after-syntax-check-hook
+            #'magnars/adjust-flycheck-automatic-syntax-eagerness)
+  (setq-default flycheck-check-syntax-automatically '(save
+                                                      idle-change
+                                                      mode-enabled))
+  (defun flycheck-handle-idle-change ()
+  "Handle an expired idle time since the last change.
+  This is an overwritten version of the original
+  flycheck-handle-idle-change, which removes the forced deferred.
+  Timers should only trigger inbetween commands in a single
+  threaded system and the forced deferred makes errors never show
+  up before you execute another command."
+    (flycheck-clear-idle-change-timer)
+    (flycheck-buffer-automatically 'idle-change)))
 #+END_SRC
 
-*** Setting up IDO (Interactive Do Things) with Smex
+**** Checker for the metadata in elisp
 
+#+BEGIN_SRC emacs-lisp
+(use-package flycheck-package
+  :after flycheck)
+#+END_SRC
+
+*** Completion of things 
+**** Ido Mode
 #+BEGIN_SRC emacs-lisp
 (use-package ido
   :diminish ido-mode
-  :init
-  (setq ido-enable-flex-matching t
-	ido-everywhere t)
-  (use-package ido-completing-read+
-    :commands ido-ubiquitous-mode)
-  (use-package smex
-    :init
-    (setq smex-history-length 10
-	  smex-flex-matching t)
-    :config
-    (smex-initialize)
-    :bind
-    (("M-x" . smex)))
+  :demand t
+  :custom
+  (ido-enable-flex-matching t)
+  (ido-everywhere t)
   :config
   (ido-mode 1))
+#+END_SRC
+
+**** ido-completing-read
+
+#+BEGIN_SRC emacs-lisp
+(use-package ido-completing-read+
+  :after ido
+  :commands ido-ubiquitous-mode)
+#+END_SRC
+
+**** Smex for M+x
+
+#+BEGIN_SRC emacs-lisp
+(use-package smex
+  :defer 5
+  :commands smex
+  :bind ("M-x" . smex))
 #+END_SRC
 
 *** Company
@@ -181,38 +267,29 @@ Disable =flycheck= on the fly, use it only when we save the buffer.
 
 #+BEGIN_SRC emacs-lisp
 (use-package company
-  :diminish company-mode
-  :init
-  (setq tab-always-indent 'complete)
-  (add-to-list 'completion-styles 'initials t)
-  (setq company-frontends '(company-pseudo-tooltip-frontend
-			  company-echo-metadata-frontend))
-  (setq-default company-tooltip-align-annotations t
-		company-dabbrev-other-buffers 'all
-		company-idle-delay 0
-		company-minimum-prefix-length 1
-		company-tooltip-limit 20)
+  :defer 5  
+  :diminish
+  :bind (:map company-active-map) ("<tab>" . company-complete-selection)  
+  :custom-face
+  (company-tooltip ((t :foreground "#1B1D1E"
+                       :background "#F8F8F0"
+                       :underline t)))
+  (company-tooltip-selection ((t :background "#349B8D"
+                                 :foreground "#F8F8F0")))
   :config
-  (add-hook 'after-init-hook 'global-company-mode)
-  (deftheme lamboley-overrides)
-  (let ((class '((class color) (min-colors 257)))
-	(terminal-class '((class color) (min-colors 89)))))
-  (custom-theme-set-faces
-   'lamboley-overrides
-   `(company-tooltip
-     ((t :foreground "#1B1D1E"
-	 :background "#F8F8F0"
-	 :underline t)))
-   `(company-tooltip-selection
-     ((t :background "#349B8D"
-	 :foreground "#F8F8F0"))))
-  :bind (:map company-active-map) ("<tab>" . company-complete-selection))
+  (setq company-frontends '(company-pseudo-tooltip-frontend
+                            company-echo-metadata-frontend))
+  (setq company-tooltip-align-annotations t
+        company-idle-delay 0
+        company-minimum-prefix-length 2)
+  (global-company-mode 1))
 #+END_SRC
 
 *** Undo tree
 
 #+BEGIN_SRC emacs-lisp
 (use-package undo-tree
+  :defer 5
   :diminish undo-tree-mode
   :config
   (global-undo-tree-mode)
@@ -224,11 +301,11 @@ Disable =flycheck= on the fly, use it only when we save the buffer.
 
 #+BEGIN_SRC emacs-lisp
 (use-package projectile
+  :defer 5
+  :diminish
+  :bind-keymap ("C-c p" . projectile-command-map)
   :config
-  (setq-default projectile-mode-line-prefix " Proj")
-  (setq projectile-project-search-path '("~/.emacs.d/" "C:/Program Files (x86)/WoW/World of Warcraft/_retail_/Interface/Addons/Aberon"))
-  (projectile-mode +1)  
-  :bind (:map projectile-mode-map) ("C-c p" . projectile-command-map))
+  (projectile-global-mode))
 #+END_SRC
 
 *** Magit
@@ -239,36 +316,38 @@ use =wincred= as a credential helper if the popups bother you.
 
 #+BEGIN_SRC emacs-lisp
 (use-package magit
+  :bind ("C-x t" . magit-status)
   :config
-  (setq magit-diff-options '("-b"))
   (setq magit-refresh-status-buffer nil)
   (when (equal system-type 'windows-nt)
     (setenv "GIT_ASKPASS" "git-gui--askpass")
-    (setq magit-git-executable "C:/Program Files/Git/bin/git.exe"))
-  :bind (("C-x t" . magit-status)))
+    (setq magit-git-executable "C:/Program Files/Git/bin/git.exe")))
 #+END_SRC
 
 *** Winner-mode
 
 #+BEGIN_SRC emacs-lisp
 (use-package winner
-  :defer t)
+  :unless noninteractive
+  :defer 5
+  :bind (("M-N" . winner-redo)
+         ("M-P" . winner-undo))
+  :config
+  (winner-mode 1))
 #+END_SRC
 
 *** origami
 
 #+BEGIN_SRC emacs-lisp
 (use-package origami
-  :bind
-  (:map origami-mode-map ("C-c F" . origami-recursively-toggle-node))
-  (:map origami-mode-map ("C-c f" . origami-toggle-all-nodes)))
+  :commands origami-mode)
 #+END_SRC
 
 *** Better mode-line
 
 #+BEGIN_SRC emacs-lisp
 (use-package smart-mode-line
-  :init
+  :config
   (setq sml/theme 'dark)
   (sml/setup))
 #+END_SRC
@@ -277,7 +356,9 @@ use =wincred= as a credential helper if the popups bother you.
 
 #+BEGIN_SRC emacs-lisp
 (use-package which-key
-  :diminish which-key-mode
+  :defer 5
+  :diminish
+  :commands which-key-mode
   :config
   (which-key-mode))
 #+END_SRC
@@ -301,6 +382,7 @@ this will not work.
 
 #+BEGIN_SRC emacs-lisp
 (use-package hydra
+  :defer t  
   :config
   (defhydra my-hydra-key-chord ()
     "Main"
@@ -313,20 +395,32 @@ this will not work.
 
 #+BEGIN_SRC emacs-lisp
 (use-package key-chord
-  :init
-  (progn
-    (setq key-chord-one-key-delay 0.16)
-    (key-chord-mode 1)
-    (key-chord-define-global "uu" 'undo)
-    (key-chord-define-global "kk" 'kill-whole-line)
-    (key-chord-define-global "hh" 'my-hydra-key-chord/body)))
+  :defer t
+  :config
+  (setq key-chord-one-key-delay 0.16)
+  (key-chord-mode 1)
+  (key-chord-define-global "uu" 'undo)
+  (key-chord-define-global "kk" 'kill-whole-line)
+  (key-chord-define-global "hh" 'my-hydra-key-chord/body))
 #+END_SRC
 
 ** Enhance editing
 *** Default Indent
 
 #+BEGIN_SRC emacs-lisp
+(setq-default tab-always-indent 'complete)
 (setq-default indent-tabs-mode nil)
+#+END_SRC
+
+*** Highlight
+
+#+BEGIN_SRC emacs-lisp
+(use-package hl-line
+  :commands hl-line-mode
+  :bind ("M-o h" . hl-line-mode))
+
+;;(use-package hl-line+
+;;  :after hl-line)
 #+END_SRC
 
 *** Easier access for specific file
@@ -348,6 +442,7 @@ Add a shortkey on =C-x j= to open specific file.
 
 #+BEGIN_SRC emacs-lisp
 (use-package smartscan
+  :defer 5
   :config
   (global-smartscan-mode t))
 #+END_SRC
@@ -388,10 +483,11 @@ point reaches the beginning or end of the buffer, stop there."
 
 #+BEGIN_SRC emacs-lisp
 (use-package whitespace-cleanup-mode
-  :diminish whitespace-cleanup-mode
+  :defer 5
+  :diminish
+  :commands whitespace-cleanup-mode
   :config
-  (setq-default show-trailing-whitespace nil)
-  (add-hook 'after-init-hook 'global-whitespace-cleanup-mode))
+  (global-whitespace-cleanup-mode 1))
 #+END_SRC
 
 *** Show line and column numbers
@@ -440,9 +536,8 @@ Support for the CSV language.
 
 #+BEGIN_SRC emacs-lisp
 (use-package csv-mode
-  :commands csv-mode
-  :mode "\\.[Cc][Ss][Vv]\\'"
-  :init
+  :mode "\\.csv\\'"
+  :config
   (setq csv-separators '("," ";" "|" " ")))
 #+END_SRC
 
@@ -450,8 +545,13 @@ Support for the CSV language.
 
 Support for the XML language.
 
-#+BEGIN_SRC emacs-lisp
-(setq nxml-slash-auto-complete-flag t)
+#+BEGIN_SRC emacs-lisp :tangle no
+(use-package nxml-mode
+  :commands nxml-mode
+  :init
+  (defalias 'xml-mode 'nxml-mode)
+  :config
+  (setq nxml-slash-auto-complete-flag t))
 #+END_SRC
 
 *** Perl5
@@ -481,10 +581,9 @@ Support for Lua language.
 
 #+BEGIN_SRC emacs-lisp
 (use-package lua-mode
-  :commands lua-mode
   :mode "\\.lua\\'"
   :interpreter "lua"
-  :init
+  :config
   (setq lua-indent-level 4))
 #+END_SRC
 
@@ -594,7 +693,24 @@ Show date and time in the =mode-line=.
 (display-time)
 #+END_SRC
 
-** Emacs's bottom header package
+** Finalisation
+*** Loading time
+
+#+BEGIN_SRC emacs-lisp
+(let ((elapsed (float-time (time-subtract (current-time)
+                                          emacs-start-time))))
+  (message "Loading %s...done (%.3fs)" load-file-name elapsed))
+
+(add-hook 'after-init-hook
+          `(lambda ()
+             (let ((elapsed
+                    (float-time
+                     (time-subtract (current-time) emacs-start-time))))
+               (message "Loading %s...done (%.3fs) [after-init]"
+                        ,load-file-name elapsed))) t)
+#+END_SRC
+
+*** Emacs's bottom header package
 
 Also necessary for flycheck.
 
