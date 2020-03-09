@@ -153,9 +153,6 @@ Keep sensitive information such as password in a separate file.
 (use-package ibuffer
   :bind ("C-x C-b" . ibuffer)
   :config
-  (require 'ibuf-ext)
-  (add-to-list 'ibuffer-never-show-predicates "^\\*")
-
   (setq ibuffer-show-empty-filter-groups nil)
 
   (define-ibuffer-column size-h (:name "Size" :inline t)
@@ -169,15 +166,30 @@ Keep sensitive information such as password in a separate file.
 		" "
 		(mode 16 16 :left :elide)
 		" "
-		filename-and-process))))
+		filename-and-process)))
+  
+  (defadvice ibuffer-update-title-and-summary (after remove-column-titles)
+    (save-excursion
+      (set-buffer "*Ibuffer*")
+      (toggle-read-only 0)
+      (goto-char 1)
+      (search-forward "-\n" nil t)
+      (delete-region 1 (point))
+      (let ((window-min-height 1)) 
+        (shrink-window-if-larger-than-buffer))
+      (toggle-read-only)))
+  
+  (ad-activate 'ibuffer-update-title-and-summary))
+
 #+END_SRC
 
 **** ibuffer-ext
 
-#+BEGIN_SRC emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp
 (use-package ibuf-ext
   :after ibuffer
-  :init 
+  :demand t  
+  :config 
   (add-to-list 'ibuffer-never-show-predicates "^\\*"))
 #+END_SRC
 
@@ -395,8 +407,7 @@ this will not work.
 
 #+BEGIN_SRC emacs-lisp
 (use-package key-chord
-  :defer t
-  :config
+  :init
   (setq key-chord-one-key-delay 0.16)
   (key-chord-mode 1)
   (key-chord-define-global "uu" 'undo)
