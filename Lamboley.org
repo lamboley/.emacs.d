@@ -334,7 +334,7 @@ use =wincred= as a credential helper if the popups bother you.
   (setq magit-refresh-status-buffer nil)
   (when (equal system-type 'windows-nt)
     (setenv "GIT_ASKPASS" "git-gui--askpass")
-    (setq magit-git-executable "C:/Program Files/Git/bin/git.exe")))
+    (setq magit-git-executable "D:/Git/bin/git.exe")))
 #+END_SRC
 
 *** Winner-mode
@@ -639,7 +639,14 @@ Support for Lua language.
 #+END_SRC
 
 ** Setting up =org-mode=
-*** TODO Setup org-mode
+*** Simulate LHS Column Name Assignments
+
+See [[https://emacs.stackexchange.com/questions/42598/org-table-spreadsheet-use-column-name-on-left-hand-side]]:
+#+BEGIN_SRC emacs-lisp
+(fset 'simulate-lhs-column-name-assignments [?\C-u ?\C-u ?\C-c ?\C-c M-down])
+(local-set-key (kbd "<f6>") 'simulate-lhs-column-name-assignments)
+#+END_SRC
+
 *** Better default behavior
 
 #+BEGIN_SRC emacs-lisp
