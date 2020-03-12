@@ -327,7 +327,7 @@ If you are on Windows with an =http(s)= repository, you will
 be prompted with a small GUI BOX for your credential. Ensure to
 use =wincred= as a credential helper if the popups bother you.
 
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no
 (use-package magit
   :bind ("C-x t" . magit-status)
   :config
@@ -644,7 +644,7 @@ Support for Lua language.
 See [[https://emacs.stackexchange.com/questions/42598/org-table-spreadsheet-use-column-name-on-left-hand-side]]:
 #+BEGIN_SRC emacs-lisp
 (fset 'simulate-lhs-column-name-assignments [?\C-u ?\C-u ?\C-c ?\C-c M-down])
-(local-set-key (kbd "<f6>") 'simulate-lhs-column-name-assignments)
+(global-set-key (kbd "<f6>") 'simulate-lhs-column-name-assignments)
 #+END_SRC
 
 *** Better default behavior
