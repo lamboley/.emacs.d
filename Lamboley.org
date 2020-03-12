@@ -83,7 +83,7 @@ is both performance-oriented and tidy.
 #+BEGIN_SRC emacs-lisp
 (package-initialize)
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
-;;(add-to-list 'package-archives '("org" . "https://orgmode.org/elpa/") t)
+(add-to-list 'package-archives '("org" . "https://orgmode.org/elpa/") t)
 
 (unless (package-installed-p 'use-package)
   (package-refresh-contents)
@@ -146,7 +146,7 @@ Keep sensitive information such as password in a separate file.
 #+END_SRC
 
 ** Enhancing Emacs
-*** Replacement for  =BufferMenu=
+*** Replacement for =BufferMenu=
 **** Ibuffer Mode
 
 #+BEGIN_SRC emacs-lisp
@@ -184,6 +184,8 @@ Keep sensitive information such as password in a separate file.
 #+END_SRC
 
 **** ibuffer-ext
+
+This allow to hide emacs special buffer in =Ibuffer=
 
 #+BEGIN_SRC emacs-lisp
 (use-package ibuf-ext
@@ -247,6 +249,7 @@ Keep sensitive information such as password in a separate file.
 
 *** Completion of things 
 **** Ido Mode
+
 #+BEGIN_SRC emacs-lisp
 (use-package ido
   :diminish ido-mode
@@ -329,12 +332,12 @@ use =wincred= as a credential helper if the popups bother you.
 
 #+BEGIN_SRC emacs-lisp
 (use-package magit
-  :bind ("C-x t" . magit-status)
+  :bind ("C-x v d" . magit-status)
   :config
   (setq magit-refresh-status-buffer nil)
   (when (equal system-type 'windows-nt)
     (setenv "GIT_ASKPASS" "git-gui--askpass")
-    (setq magit-git-executable "D:/Git/bin/git.exe")))
+    (setq magit-git-executable my-private-git-path)))
 #+END_SRC
 
 *** Winner-mode
@@ -639,28 +642,46 @@ Support for Lua language.
 #+END_SRC
 
 ** Setting up =org-mode=
-*** Simulate LHS Column Name Assignments
+*** Set Keybind
 
-See [[https://emacs.stackexchange.com/questions/42598/org-table-spreadsheet-use-column-name-on-left-hand-side]]:
 #+BEGIN_SRC emacs-lisp
-(fset 'simulate-lhs-column-name-assignments [?\C-u ?\C-u ?\C-c ?\C-c M-down])
-(global-set-key (kbd "<f6>") 'simulate-lhs-column-name-assignments)
+(add-hook 'org-mode-hook
+          (lambda ()
+            (local-set-key (kbd "C-c a") #'org-agenda)))
+#+END_SRC
+
+*** Disable =flycheck= when editing block source
+
+Metadata are required for elisp package, so we disable
+checker of elisp in block source.
+
+#+BEGIN_SRC emacs-lisp
+(add-hook 'org-src-mode-hook
+          (lambda ()
+            (setq-local flycheck-disabled-checkers '(emacs-lisp-checkdoc))))
 #+END_SRC
 
 *** Better default behavior
-
+    
 #+BEGIN_SRC emacs-lisp
 (setq org-edit-src-content-indentation 0)
 (setq org-log-done 'time)
 #+END_SRC
 
-*** Disable =flycheck= when editing block source
+*** Setting up =org-agenda=
+**** Generic setting
 
 #+BEGIN_SRC emacs-lisp
-(defun my-disable-fylcheck-in-org-src-block ()
-  (setq-local flycheck-disabled-checkers '(emacs-lisp-checkdoc)))
+(setq org-agenda-files (directory-files-recursively "~/org-mode-project/" "\.org$"))
+#+END_SRC
 
-(add-hook 'org-src-mode-hook 'my-disable-fylcheck-in-org-src-block)
+*** Setting up org-spreadsheet
+**** Simulate LHS Column Name Assignments
+
+See [[https://emacs.stackexchange.com/questions/42598/org-table-spreadsheet-use-column-name-on-left-hand-side]]:
+#+BEGIN_SRC emacs-lisp
+(fset 'simulate-lhs-column-name-assignments [?\C-u ?\C-u ?\C-c ?\C-c M-down])
+(global-set-key (kbd "<f6>") 'simulate-lhs-column-name-assignments)
 #+END_SRC
 
 ** Generic configuration
