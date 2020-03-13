@@ -152,7 +152,7 @@ Keep sensitive information such as password in a separate file.
 #+BEGIN_SRC emacs-lisp
 (use-package ibuffer
   :bind ("C-x C-b" . ibuffer)
-  :config
+  :config    
   (setq ibuffer-show-empty-filter-groups nil)
 
   (define-ibuffer-column size-h (:name "Size" :inline t)
@@ -195,6 +195,19 @@ This allow to hide emacs special buffer in =Ibuffer=
   (add-to-list 'ibuffer-never-show-predicates "^\\*"))
 #+END_SRC
 
+**** ibuffer-vc
+
+#+BEGIN_SRC emacs-lisp
+(use-package ibuffer-vc
+  :after ibuffer
+  :preface
+  (defun ibuffer-set-up-preferred-filters ()
+    (ibuffer-vc-set-filter-groups-by-vc-root)
+    (unless (eq ibuffer-sorting-mode 'filename/process)
+      (ibuffer-do-sort-by-filename/process)))
+  :hook (ibuffer . ibuffer-set-up-preferred-filters))
+#+END_SRC
+
 *** Check syntax on the fly
 **** Flycheck Mode
 
@@ -212,7 +225,6 @@ This allow to hide emacs special buffer in =Ibuffer=
                  (bind-key "M-n" #'flycheck-next-error ,(cdr where))
                  (bind-key "M-p" #'flycheck-previous-error ,(cdr where)))))
   :config
-  (global-flycheck-mode)
   (defalias 'show-error-at-point-soon
     'flycheck-show-error-at-point)
 
@@ -275,7 +287,10 @@ This allow to hide emacs special buffer in =Ibuffer=
 (use-package smex
   :defer 5
   :commands smex
-  :bind ("M-x" . smex))
+  :bind ("M-x" . smex)
+  :config
+  (setq smex-history-length 1000
+        smex-save-file (emacs-path ".smex")))
 #+END_SRC
 
 *** Company
@@ -364,6 +379,7 @@ use =wincred= as a credential helper if the popups bother you.
 #+BEGIN_SRC emacs-lisp
 (use-package smart-mode-line
   :config
+  (setq sml/no-confirm-load-theme t)
   (setq sml/theme 'dark)
   (sml/setup))
 #+END_SRC
@@ -608,25 +624,12 @@ Support for the XML language.
   (setq nxml-slash-auto-complete-flag t))
 #+END_SRC
 
-*** Perl5
-
-Support for Perl5 language. We use =cperl-mode= over =perl-mode=.
+*** Eldoc
 
 #+BEGIN_SRC emacs-lisp
-(mapc
-  (lambda (pair)
-    (if (eq (cdr pair) 'perl-mode)
-      (setcdr pair 'cperl-mode)))
-  (append auto-mode-alist interpreter-mode-alist))
-
-(setq cperl-invalid-face nil
-      cperl-hairy t
-      cperl-indent-level 4
-      cperl-indent-parens-as-block t
-      cperl-close-paren-offset -4
-      cperl-continued-statement-offset 4
-      cperl-tab-always-indent t
-      cperl-indent-subs-specially nil)
+(use-package eldoc
+  :diminish
+  :hook (emacs-lisp-mode . eldoc-mode))
 #+END_SRC
 
 *** Lua
@@ -641,6 +644,32 @@ Support for Lua language.
   (setq lua-indent-level 4))
 #+END_SRC
 
+*** Perl5
+
+#+BEGIN_SRC emacs-lisp
+(use-package cperl-mode
+  :mode "\\.[pP][Llm]\\'"
+  :interpreter "perl"
+  :preface
+  (defun my-cperl-mode-hook ()
+    (require 'flycheck)
+    (flycheck-mode 1)
+    
+    (setq-local flycheck-check-syntax-automatically nil)
+    (setq-local flycheck-highlighting-mode nil))
+  :hook (cperl-mode . my-cperl-mode-hook)
+  :config
+  (setq cperl-invalid-face nil
+        cperl-hairy t
+        cperl-indent-level 4
+        cperl-indent-parens-as-block t
+        cperl-close-paren-offset -4
+        cperl-continued-statement-offset 4
+        cperl-tab-always-indent t
+        cperl-indent-subs-specially nil
+        cperl-electric-parens-string nil))
+#+END_SRC 
+
 ** Setting up =org-mode=
 *** Set Keybind
 
@@ -654,6 +683,8 @@ Support for Lua language.
 
 Metadata are required for elisp package, so we disable
 checker of elisp in block source.
+
+Actually this is useless because I enable =flucheck= only in =cperl-mode=
 
 #+BEGIN_SRC emacs-lisp
 (add-hook 'org-src-mode-hook
@@ -672,7 +703,7 @@ checker of elisp in block source.
 **** Generic setting
 
 #+BEGIN_SRC emacs-lisp
-(setq org-agenda-files (directory-files-recursively "~/org-mode-project/" "\.org$"))
+(setq org-agenda-files (directory-files-recursively "~/personnel/org/" "\.org$"))
 #+END_SRC
 
 *** Setting up org-spreadsheet
@@ -694,42 +725,61 @@ See [[https://emacs.stackexchange.com/questions/42598/org-table-spreadsheet-use-
 #+END_SRC
 
 *** Restore session
+**** Enable desktop restoration
 
 #+BEGIN_SRC emacs-lisp
 (setq desktop-path (list user-emacs-directory)
       desktop-auto-save-timeout 600)
+(setq desktop-buffers-not-to-save 'dired-mode)
 (desktop-save-mode 1)
-
-(use-package session)
-(setq session-save-file-coding-system 'utf-8)
-(setq session-name-disable-regexp "\\(?:\\`'/tmp\\|\\.git/[A-Z_]+\\'\\)")
-(add-hook 'after-init-hook 'session-initialize)
 #+END_SRC
 
-*** Backup, save and lock files
+**** Variable to save in desktop file
 
 #+BEGIN_SRC emacs-lisp
-(setq backup-directory-alist
-      `(("." . ,(expand-file-name (concat user-emacs-directory "backup")))))
+(setq desktop-globals-to-save
+      '((dired-regexp-history     . 20)
+        (extended-command-history . 30)
+        (face-name-history        . 20)
+        (file-name-history        . 100)
+        (magit-revision-history   . 50)
+        (minibuffer-history       . 50)
+        (org-clock-history        . 50)
+        (org-refile-history       . 50)
+        (org-tags-history         . 50)
+        (query-replace-history    . 60)
+        (read-expression-history  . 60)
+        (regexp-history           . 60)
+        (regexp-search-ring       . 20)
+        register-alist
+        (search-ring              . 20)
+        (shell-command-history    . 50)
+        tags-file-name
+        tags-table-list))
+#+END_SRC
 
-(setq delete-old-versions -1)
-(setq version-control t)
-(setq vc-make-backup-files t)
-(setq auto-save-file-name-transforms
-      `((".*" ,(expand-file-name (concat user-emacs-directory "auto-save-list")) t)))
+*** Set directory for backup 
 
+#+BEGIN_SRC emacs-lisp
+(setq backup-directory-alist `(("." . ,(emacs-path "backup"))))
+#+END_SRC
+
+*** Do not prompt when delete old backup
+
+#+BEGIN_SRC emacs-lisp
+(setq delete-old-versions t)
+#+END_SRC
+
+*** Set directory for save-file
+
+#+BEGIN_SRC emacs-lisp
+(setq auto-save-file-name-transforms `((".*" ,(emacs-path "auto-save-list")) t))
+#+END_SRC
+
+*** Disable lockfile
+
+#+BEGIN_SRC emacs-lisp
 (setq create-lockfiles nil)
-#+END_SRC
-
-*** History
-
-#+BEGIN_SRC emacs-lisp
-(setq savehist-file (expand-file-name (concat user-emacs-directory "savehist")))
-(savehist-mode 1)
-(setq history-length t)
-(setq history-delete-duplicates t)
-(setq savehist-save-minibuffer-history 1)
-(setq savehist-additional-variables '(kill-ring search-ring regexp-search-ring))
 #+END_SRC
 
 *** Recent file
@@ -737,6 +787,20 @@ See [[https://emacs.stackexchange.com/questions/42598/org-table-spreadsheet-use-
 #+BEGIN_SRC emacs-lisp
 (use-package recentf
   :defer 10
+  :commands (recentf-mode
+             recentf-add-file
+             recentf-apply-filename-handlers)
+  :preface
+  (defun recentf-add-dired-directory ()
+    (if (and dired-directory
+             (file-directory-p dired-directory)
+             (not (string= "/" dired-directory)))
+        (let ((last-idx (1- (length dired-directory))))
+          (recentf-add-file
+           (if (= ?/ (aref dired-directory last-idx))
+               (substring dired-directory 0 last-idx)
+             dired-directory)))))
+  :hook (dired-mode . recentf-add-dired-directory)
   :config
   (setq recentf-max-saved-items 200
         recentf-max-menu-items 25)
@@ -758,15 +822,13 @@ Copied from https://emacsredux.com/blog/2013/03/27/copy-filename-to-the-clipboar
       (message "Copied buffer file name '%s' to the clipboard." filename))))
 #+END_SRC
 
-*** Miscellaneous
-
-Always use y-or-n over yes-or-no because it is shorter.
+*** Always use y-or-n over yes-or-no
 
 #+BEGIN_SRC emacs-lisp
 (defalias 'yes-or-no-p 'y-or-n-p)
 #+END_SRC
 
-Show date and time in the =mode-line=.
+*** Show date and time
 
 #+BEGIN_SRC emacs-lisp
 (setq display-time-day-and-date t
